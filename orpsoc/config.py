@@ -28,7 +28,13 @@ class Config(object):
         config_file = './orpsoc.conf'
         if os.path.exists(config_file):
             config = configparser.SafeConfigParser(DEFAULT_VALUES)
+
             config.readfp(open('./orpsoc.conf'))
+
+            # Expand any paths which have used environment variables
+            # or tildes.
+            for root_type in ('systems_root', 'cores_root'):
+                config.set('main', root_type, self.rationalise_path(config.get('main', root_type)))
 
             self.build_root = config.get('main','build_root')
             self.cache_root = config.get('main','cache_root')
@@ -43,3 +49,9 @@ class Config(object):
             self.cores_root   = 'cores'
         if self.systems_root is None and os.path.exists('systems'):
             self.systems_root = 'systems'
+
+    def rationalise_path(self, path):
+        path = os.path.expanduser(path)
+        path = os.path.expandvars(path)
+        path = os.path.abspath(path)
+        return path
